@@ -11,7 +11,8 @@ const lexer = new Lexer(code);
 lexer.lexAnalysis();
 
 //Прогоняем чечез парсер, получем абстрактное синтаксическое дерево
-// И запускаем код
 const parser = new Parser(lexer.tokenList);
 const rootNode = parser.parseCode();
+
+// И запускаем код
 parser.execute(rootNode);

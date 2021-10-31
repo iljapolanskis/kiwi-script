@@ -4,7 +4,7 @@ import { tokenTypesList } from "./TokenType";
 export default class Lexer {
 
     // Define constants
-    readonly ASSERT_POSITION_AT_LINE_BEGINING = '^';
+    readonly ASSERT_POSITION_AT_LINE_BEGINNING = '^';
 
     code: string;
     position: number = 0;
@@ -34,7 +34,7 @@ export default class Lexer {
 
         for (let i = 0; i < tokenTypesValues.length; i++) {
             const tokenType = tokenTypesValues[i];
-            const regex = new RegExp(this.ASSERT_POSITION_AT_LINE_BEGINING + tokenType.regex);
+            const regex = new RegExp(this.ASSERT_POSITION_AT_LINE_BEGINNING + tokenType.regex);
             const result = this.code.substr(this.position).match(regex);
 
             if (result && result[0]) {
@@ -46,6 +46,5 @@ export default class Lexer {
         }
 
         throw new Error(`На позиции ${ this.position } обнаружена ошибка`);
-
     }
 }

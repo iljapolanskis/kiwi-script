@@ -16,7 +16,7 @@ export const tokenTypesList = {
     'ASSIGN': new TokenType('ASSIGN', 'РАВНО'),
     'LOG': new TokenType('LOG', 'КОНСОЛЬ'),
     'ADDITION': new TokenType('ADDITION', 'ПЛЮС'),
-    'SUBSTRACTION': new TokenType('SUBSTRACTION', 'МИНУС'),
+    'SUBTRACTION': new TokenType('SUBTRACTION', 'МИНУС'),
     'OPEN_PARENTHESIS': new TokenType('OPEN_PARENTHESIS', '\\('),
     'CLOSE_PARENTHESIS': new TokenType('CLOSE_PARENTHESIS', '\\)')
 }

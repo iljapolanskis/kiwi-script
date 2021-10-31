@@ -1,11 +1,11 @@
-import NumberNode from "./AST/NumberNode";
-import StatementsNode from "./AST/StatementsNode";
-import VariableNode from "./AST/VariableNode";
-import Token from "./Token"
-import TokenType, {tokenTypesList} from "./TokenType";
 import BinaryOperationNode from "./AST/BinaryOperationNode";
 import ExpressionNode from "./AST/ExpressionNode";
+import NumberNode from "./AST/NumberNode";
+import StatementsNode from "./AST/StatementsNode";
+import Token from "./Token"
+import TokenType, {tokenTypesList} from "./TokenType";
 import UnaryOperationNode from "./AST/UnaryOperationNode";
+import VariableNode from "./AST/VariableNode";
 
 export default class Parser {
     tokens: Token[];
@@ -32,8 +32,10 @@ export default class Parser {
         const foundToken = this.match(...expected);
 
         if (foundToken === null) {
-            const expectedTokenTypes = expected.map( tokenType => { return tokenType.name })
-            throw new Error(`На позиции ${ this.position } ожидается ${expectedTokenTypes}`);
+            const expectedTokenTypes = expected.map(tokenType => {
+                return tokenType.name
+            })
+            throw new Error(`На позиции ${this.position} ожидается ${expectedTokenTypes}`);
         }
 
         return foundToken;
@@ -53,7 +55,7 @@ export default class Parser {
     parseExpression() {
         if (this.match(tokenTypesList.VARIABLE) === null) {
             // Если не переменная, то ожидаем оператор/функцию
-            // TODO: Добавить switch case
+            // TODO: Добавить switch case, должна идти обработка UnaryOperationsNode
             return this.parsePrint();
         }
         // Произошло смещение указателя в функции match()
@@ -78,20 +80,19 @@ export default class Parser {
 
         const variable = this.match(tokenTypesList.VARIABLE);
         if (variable !== null) {
-            return  new VariableNode(variable);
+            return new VariableNode(variable);
         }
 
-        throw new Error(`На позиции ${this.position} ожидается 
-                        ${tokenTypesList.NUMBER.name} или ${tokenTypesList.VARIABLE.name}`);
+        throw new Error(`На позиции ${this.position} ожидается ${tokenTypesList.NUMBER.name} или ${tokenTypesList.VARIABLE.name}`);
     }
 
     parseFormula(): ExpressionNode {
         let leftNode = this.parseParenthesis();
-        let operator = this.match(tokenTypesList.ADDITION, tokenTypesList.SUBSTRACTION);
+        let operator = this.match(tokenTypesList.ADDITION, tokenTypesList.SUBTRACTION);
         while (operator !== null) {
             const rightNode = this.parseParenthesis();
             leftNode = new BinaryOperationNode(operator, leftNode, rightNode);
-            operator = this.match(tokenTypesList.ADDITION, tokenTypesList.SUBSTRACTION);
+            operator = this.match(tokenTypesList.ADDITION, tokenTypesList.SUBTRACTION);
         }
         return leftNode;
     }
@@ -115,45 +116,51 @@ export default class Parser {
     }
 
     execute(node: ExpressionNode): any {
-        // TODO: Ввести switch здесь
 
-        if (node instanceof NumberNode) {
-            return parseInt(node.number.text);
-        }
+        switch (node.constructor) {
 
-        if (node instanceof UnaryOperationNode) {
-            switch (node.operator.type) {
-                case tokenTypesList.LOG:
-                    console.log(this.execute(node.operand));
-                    return;
+            case NumberNode: {
+                return parseInt((<NumberNode>node).number.text);
+            }
+
+            case UnaryOperationNode: {
+                switch ((<UnaryOperationNode>node).operator.type) {
+                    case tokenTypesList.LOG:
+                        console.log(this.execute((<UnaryOperationNode>node).operand));
+                        return;
+                }
+            }
+
+            case BinaryOperationNode: {
+                switch ((<BinaryOperationNode>node).operator.type) {
+                    case tokenTypesList.ADDITION:
+                        return this.execute((<BinaryOperationNode>node).leftNode) + this.execute((<BinaryOperationNode>node).rightNode);
+                    case tokenTypesList.SUBTRACTION:
+                        return this.execute((<BinaryOperationNode>node).leftNode) - this.execute((<BinaryOperationNode>node).rightNode);
+                    case tokenTypesList.ASSIGN:
+                        const result = this.execute((<BinaryOperationNode>node).rightNode);
+                        const variableNode = <VariableNode>(<BinaryOperationNode>node).leftNode;
+                        this.scope[variableNode.variable.text] = result;
+                        return result;
+                }
+                throw new Error(`Ожидается оператор ${tokenTypesList.ADDITION.name} | ${tokenTypesList.SUBTRACTION.name} | ${tokenTypesList.ASSIGN.name}`);
+            }
+
+            case VariableNode: {
+                if (this.scope[(<VariableNode>node).variable.text]) {
+                    return this.scope[(<VariableNode>node).variable.text];
+                }
+                throw new Error(`Не существует переменной с именемем ${(<VariableNode>node).variable.text}`);
+            }
+
+            case StatementsNode: {
+                (<StatementsNode>node).codeStrings.forEach(lineOfCode => this.execute(lineOfCode));
+                return 0;
             }
         }
 
-        if (node instanceof BinaryOperationNode) {
-            switch (node.operator.type) {
-                case tokenTypesList.ADDITION:
-                    return this.execute(node.leftNode) + this.execute(node.rightNode);
-                case tokenTypesList.SUBSTRACTION:
-                    return this.execute(node.leftNode) - this.execute(node.rightNode);
-                case tokenTypesList.ASSIGN:
-                    const result = this.execute(node.rightNode);
-                    const variableNode = <VariableNode>node.leftNode;
-                    this.scope[variableNode.variable.text] = result;
-                    return result;
-            }
-        }
-        if (node instanceof VariableNode) {
-            if (this.scope[node.variable.text]) {
-                return this.scope[node.variable.text];
-            }
-            throw new Error(`Не существует переменной с именемем ${node.variable.text}`);
-        }
-
-        if (node instanceof StatementsNode) {
-            node.codeStrings.forEach(lineOfCode => this.execute(lineOfCode));
-            return 0;
-        }
         throw new Error(`Ошибка компиляции!`);
+
     }
 
 }

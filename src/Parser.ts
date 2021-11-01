@@ -120,26 +120,29 @@ export default class Parser {
         switch (node.constructor) {
 
             case NumberNode: {
-                return parseInt((<NumberNode>node).number.text);
+                const numberNode = <NumberNode>node;
+                return parseInt(numberNode.number.text);
             }
 
             case UnaryOperationNode: {
-                switch ((<UnaryOperationNode>node).operator.type) {
+                const unaryOperationNode = <UnaryOperationNode>node;
+                switch (unaryOperationNode.operator.type) {
                     case tokenTypesList.LOG:
-                        console.log(this.execute((<UnaryOperationNode>node).operand));
+                        console.log(this.execute(unaryOperationNode.operand));
                         return;
                 }
             }
 
             case BinaryOperationNode: {
-                switch ((<BinaryOperationNode>node).operator.type) {
+                const binaryOperationNode = <BinaryOperationNode>node;
+                switch (binaryOperationNode.operator.type) {
                     case tokenTypesList.ADDITION:
-                        return this.execute((<BinaryOperationNode>node).leftNode) + this.execute((<BinaryOperationNode>node).rightNode);
+                        return this.execute(binaryOperationNode.leftNode) + this.execute(binaryOperationNode.rightNode);
                     case tokenTypesList.SUBTRACTION:
-                        return this.execute((<BinaryOperationNode>node).leftNode) - this.execute((<BinaryOperationNode>node).rightNode);
+                        return this.execute(binaryOperationNode.leftNode) - this.execute(binaryOperationNode.rightNode);
                     case tokenTypesList.ASSIGN:
-                        const result = this.execute((<BinaryOperationNode>node).rightNode);
-                        const variableNode = <VariableNode>(<BinaryOperationNode>node).leftNode;
+                        const result = this.execute(binaryOperationNode.rightNode);
+                        const variableNode = <VariableNode>binaryOperationNode.leftNode;
                         this.scope[variableNode.variable.text] = result;
                         return result;
                 }
@@ -147,14 +150,16 @@ export default class Parser {
             }
 
             case VariableNode: {
-                if (this.scope[(<VariableNode>node).variable.text]) {
-                    return this.scope[(<VariableNode>node).variable.text];
+                const variableNode = <VariableNode>node;
+                if (this.scope[variableNode.variable.text]) {
+                    return this.scope[variableNode.variable.text];
                 }
-                throw new Error(`Не существует переменной с именемем ${(<VariableNode>node).variable.text}`);
+                throw new Error(`Не существует переменной с именемем ${variableNode.variable.text}`);
             }
 
             case StatementsNode: {
-                (<StatementsNode>node).codeStrings.forEach(lineOfCode => this.execute(lineOfCode));
+                const statementsNode = <StatementsNode>node;
+                statementsNode.codeStrings.forEach(lineOfCode => this.execute(lineOfCode));
                 return 0;
             }
         }
